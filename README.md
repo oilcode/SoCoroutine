@@ -1,6 +1,6 @@
 # SoCoroutine
 这是一个使用“switch-case”实现的轻量级的原语级别的风骚的令人惊叹的协程库<br>
-我学习了大牛的方法，用自己理解的方式进行了封装。仅供学习。<br>
+我学习了大牛的方法，用自己理解的方式进行了封装。版权属于大牛。仅供学习。<br>
 /* The credit belongs to Tom Duff , Simon Tatham and zhicheng */<br>
 //http://coolshell.cn/articles/10975.html<br>
 //https://github.com/zhicheng/coroutine<br>
@@ -32,5 +32,7 @@
 //    other code invote SoCoroutineResume(pCo)<br>
 // ...<br>
 // SoCoroutineDelete(pCo)<br>
+<br>
+在 main.cpp 中有完整示例。<br>
 <br>
 
