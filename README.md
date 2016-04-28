@@ -35,4 +35,9 @@
 <br>
 在 main.cpp 中有完整示例。<br>
 <br>
+编译方法：<br>
+由于使用了违背编程规范的邪恶的宏（主要是指宏的展开代码），VisualStudio的debug模式会编译失败。<br>
+修改项目属性即可解决：<br>
+Propertys -> C/C++ -> General -> Debug Information Format : 把默认的 Program Database for Edit & Continue (/ZI) 修改成 Program Database (/Zi)。<br>
+<br>
 
