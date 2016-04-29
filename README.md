@@ -31,7 +31,7 @@
 // ...<br>
 //    other code invote SoCoroutineResume(pCo)<br>
 // ...<br>
-// SoCoroutineDelete(pCo)<br>
+// SoCoroutineDelete(&pCo)<br>
 <br>
 在 main.cpp 中有完整示例。<br>
 <br>
