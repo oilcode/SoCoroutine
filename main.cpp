@@ -21,6 +21,7 @@ void testCo(SoCoroutine* pCo)
 	SoCoroutineWait(pCo, pParam->fWaitTime);
 	printf("my num %.2f\n", pParam->fPrintNum);
 	SoCoroutineEnd(pCo);
+	SoCoroutineDelete(&pCo);
 }
 //----------------------------------------------------------------
 void main()
@@ -29,15 +30,13 @@ void main()
 	CoParam kParamA;
 	kParamA.fWaitTime = 5.5f;
 	kParamA.fPrintNum = 555.0f;
-	SoCoroutine* pCoA = SoCoroutineCreate(testCo, &kParamA);
 	CoParam kParamB;
 	kParamB.fWaitTime = 8.5f;
 	kParamB.fPrintNum = 888.0f;
-	SoCoroutine* pCoB = SoCoroutineCreate(testCo, &kParamB);
 
 	//
-	testCo(pCoA);
-	testCo(pCoB);
+	testCo(SoCoroutineCreate(testCo, &kParamA));
+	testCo(SoCoroutineCreate(testCo, &kParamB));
 
 	float fAccTime = 0.0f;
 	bool bRunning = true;
@@ -54,8 +53,6 @@ void main()
 		}
 	}
 
-	SoCoroutineDelete(pCoA);
-	SoCoroutineDelete(pCoB);
 	SoCoroutineManager::ReleaseCoroutineManager();
 }
 //----------------------------------------------------------------
