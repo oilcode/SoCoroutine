@@ -2,10 +2,10 @@
 #ifndef _SoCoroutine_h_
 #define _SoCoroutine_h_
 //------------------------------------------------------------
-#define SoCoroutineCreate(pFunc, pUserData) SoCoroutineManager::Get()->CreateCoroutine(pFunc, pUserData);
-#define SoCoroutineDelete(pCo)              SoCoroutineManager::Get()->DeleteCoroutine(pCo);
+#define SoCoroutineCreate(pFunc, pUserData) SoCoroutineManager::Get()->CreateCoroutine(pFunc, pUserData)
+#define SoCoroutineDelete(ppCo)             SoCoroutineManager::Get()->DeleteCoroutine(ppCo);
 #define SoCoroutineBegin(pCo)               pCo->m_nStatus = SoCoroutineStatus_Running; switch (pCo->m_nLineNum) { case 0:
-#define SoCoroutineEnd(pCo)                 }; pCo->m_nStatus = SoCoroutineStatus_Dead;
+#define SoCoroutineEnd(pCo)                 }; pCo->m_nStatus = SoCoroutineStatus_End;
 #define SoCoroutineYield(pCo)               do { pCo->m_nStatus = SoCoroutineStatus_Suspend; pCo->m_nLineNum = __LINE__; return; case __LINE__:; } while (0);
 #define SoCoroutineResume(pCo)              pCo->m_nStatus = SoCoroutineStatus_Running; pCo->m_pFunc(pCo);
 #define SoCoroutineWait(pCo, fWaitTime)     pCo->m_fRemainWaitTime = fWaitTime; SoCoroutineYield(pCo);
@@ -14,10 +14,11 @@
 //------------------------------------------------------------
 enum SoCoroutineStatus
 {
-	SoCoroutineStatus_Dead,
-	SoCoroutineStatus_Ready,
+	SoCoroutineStatus_Begin,
 	SoCoroutineStatus_Running,
 	SoCoroutineStatus_Suspend,
+	SoCoroutineStatus_End,
+	SoCoroutineStatus_Dead,
 };
 //------------------------------------------------------------
 class SoCoroutine;
@@ -55,7 +56,7 @@ public:
 
 	void UpdateCoroutineManager(float fDeltaTime);
 	SoCoroutine* CreateCoroutine(SoCoroutineFuncPointer pFunc, void* pUserData);
-	void DeleteCoroutine(SoCoroutine* pCo);
+	void DeleteCoroutine(SoCoroutine** ppCo);
 
 private:
 	SoCoroutineManager();
@@ -67,6 +68,7 @@ private:
 private:
 	static SoCoroutineManager* ms_pInstance;
 	SoArray m_kArray;
+	int m_nCountOfUndeadCoroutine;
 };
 //------------------------------------------------------------
 inline SoCoroutineManager* SoCoroutineManager::Get()

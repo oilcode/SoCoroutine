@@ -30,7 +30,7 @@
 // ...
 //    other code invote SoCoroutineResume(pCo)
 // ...
-// SoCoroutineDelete(pCo)
+// SoCoroutineDelete(&pCo)
 //------------------------------------------------------------
 #include "SoCoroutine.h"
 //------------------------------------------------------------
@@ -65,6 +65,7 @@ void SoCoroutineManager::ReleaseCoroutineManager()
 }
 //----------------------------------------------------------------
 SoCoroutineManager::SoCoroutineManager()
+:m_nCountOfUndeadCoroutine(0)
 {
 
 }
@@ -85,15 +86,26 @@ bool SoCoroutineManager::InitCoroutineManager()
 //------------------------------------------------------------
 void SoCoroutineManager::ClearCoroutineManager()
 {
+	SoCoroutine* pTemp = 0;
+	const int nCount = m_kArray.GetCount();
+	for (int i = 0; i < nCount; ++i)
+	{
+		pTemp = (SoCoroutine*)m_kArray.GetElement(i);
+		if (pTemp)
+		{
+			pTemp->Clear();
+		}
+	}
 	m_kArray.Clear();
+	m_nCountOfUndeadCoroutine = 0;
 }
 //------------------------------------------------------------
 void SoCoroutineManager::UpdateCoroutineManager(float fDeltaTime)
 {
-	const int nCount = m_kArray.GetCount();
-	if (nCount > 0)
+	if (m_nCountOfUndeadCoroutine > 0)
 	{
 		SoCoroutine* pCo = 0;
+		const int nCount = m_kArray.GetCount();
 		for (int i = 0; i < nCount; ++i)
 		{
 			pCo = (SoCoroutine*)m_kArray.GetElement(i);
@@ -127,18 +139,24 @@ SoCoroutine* SoCoroutineManager::CreateCoroutine(SoCoroutineFuncPointer pFunc, v
 	}
 	if (pCo)
 	{
-		pCo->m_nStatus = SoCoroutineStatus_Ready;
+		pCo->m_nStatus = SoCoroutineStatus_Begin;
 		pCo->m_pFunc = pFunc;
 		pCo->m_pUserData = pUserData;
+		++m_nCountOfUndeadCoroutine;
 	}
 	return pCo;
 }
 //------------------------------------------------------------
-void SoCoroutineManager::DeleteCoroutine(SoCoroutine* pCo)
+void SoCoroutineManager::DeleteCoroutine(SoCoroutine** ppCo)
 {
-	if (pCo)
+	if (ppCo && *ppCo)
 	{
-		pCo->Clear();
+		if ((*ppCo)->m_nStatus != SoCoroutineStatus_Dead)
+		{
+			--m_nCountOfUndeadCoroutine;
+		}
+		(*ppCo)->Clear();
+		(*ppCo) = 0;
 	}
 }
 //------------------------------------------------------------
@@ -150,7 +168,7 @@ SoCoroutine* SoCoroutineManager::FindEmptyElement()
 	for (int i = 0; i < nCount; ++i)
 	{
 		pTemp = (SoCoroutine*)m_kArray.GetElement(i);
-		if (pTemp->m_nStatus == SoCoroutineStatus_Dead)
+		if (pTemp && pTemp->m_nStatus == SoCoroutineStatus_Dead)
 		{
 			pCo = pTemp;
 			break;
