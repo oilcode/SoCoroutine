@@ -2,15 +2,17 @@
 #include <Windows.h>
 #include <cstdio>
 #include "SoCoroutine.h"
+#include <math.h>
+#include "TestClass.h"
 //----------------------------------------------------------------
 #define Time_Interval 1
 #define Time_Max 20
 //----------------------------------------------------------------
-struct CoParam
-{
-	float fWaitTime;
-	float fPrintNum;
-};
+//struct CoParam
+//{
+//	float fWaitTime;
+//	float fPrintNum;
+//};
 //----------------------------------------------------------------
 void testCo(SoCoroutine* pCo)
 {
@@ -35,8 +37,17 @@ void main()
 	kParamB.fPrintNum = 888.0f;
 
 	//
-	testCo(SoCoroutineCreate(testCo, &kParamA));
-	testCo(SoCoroutineCreate(testCo, &kParamB));
+	SoCoroutineParam kCoParam;
+	kCoParam.nObjType = SoCoroutineObjType_None;
+	kCoParam.pObjFunc = testCo;
+	kCoParam.pUserData = &kParamA;
+	testCo(SoCoroutineCreate(&kCoParam));
+
+	TestClass kTest;
+	kCoParam.nObjType = SoCoroutineObjType_Test;
+	kCoParam.pObjFunc = &kTest;
+	kCoParam.pUserData = &kParamB;
+	kTest.ProcessCo(SoCoroutineCreate(&kCoParam));
 
 	float fAccTime = 0.0f;
 	bool bRunning = true;

@@ -11,7 +11,8 @@
 //2，禁止在同一行代码里面调用两次或者多次 SoCoroutineYield 。
 //
 //下面的伪代码展示了使用方法：
-// SoCoroutine* pCo = SoCoroutineCreate()
+// SoCoroutineParam kParam;
+// SoCoroutine* pCo = SoCoroutineCreate(&kParam)
 // ...
 //    void testCo(SoCoroutine* pCo)
 //    {
@@ -33,6 +34,43 @@
 // SoCoroutineDelete(&pCo)
 //------------------------------------------------------------
 #include "SoCoroutine.h"
+#include "TestClass.h"
+//------------------------------------------------------------
+void SoCoroutine::CallFunc()
+{
+	switch (m_nObjType)
+	{
+	case SoCoroutineObjType_None:
+		{
+			SoCoroutineFuncPointer realFunc = (SoCoroutineFuncPointer)m_pObjFunc;
+			realFunc(this);
+		} break;
+		//<<<<<<<<<<<<<<<<<<<<<<<<<< user define <<<<<<<<<<<<<
+	case SoCoroutineObjType_Test:
+		{
+			TestClass* realObj = (TestClass*)m_pObjFunc;
+			realObj->ProcessCo(this);
+		} break;
+		//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+	default:
+		break;
+	}
+}
+//------------------------------------------------------------
+SoCoroutine::SoCoroutine()
+{
+	Clear();
+}
+//------------------------------------------------------------
+void SoCoroutine::Clear()
+{
+	m_pObjFunc = 0;
+	m_pUserData = 0;
+	m_nStatus = SoCoroutineStatus_Dead;
+	m_nLineNum = 0;
+	m_nObjType = SoCoroutineObjType_None;
+	m_fRemainWaitTime = -1.0f;
+}
 //------------------------------------------------------------
 SoCoroutineManager* SoCoroutineManager::ms_pInstance = 0;
 //------------------------------------------------------------
@@ -87,16 +125,16 @@ bool SoCoroutineManager::InitCoroutineManager()
 void SoCoroutineManager::ClearCoroutineManager()
 {
 	SoCoroutine* pTemp = 0;
-	const int nCount = m_kArray.GetCount();
+	const int nCount = m_kArray.GetCapacity();
 	for (int i = 0; i < nCount; ++i)
 	{
-		pTemp = (SoCoroutine*)m_kArray.GetElement(i);
+		pTemp = (SoCoroutine*)m_kArray.GetAt(i);
 		if (pTemp)
 		{
 			pTemp->Clear();
 		}
 	}
-	m_kArray.Clear();
+	m_kArray.ClearArray();
 	m_nCountOfUndeadCoroutine = 0;
 }
 //------------------------------------------------------------
@@ -105,10 +143,10 @@ void SoCoroutineManager::UpdateCoroutineManager(float fDeltaTime)
 	if (m_nCountOfUndeadCoroutine > 0)
 	{
 		SoCoroutine* pCo = 0;
-		const int nCount = m_kArray.GetCount();
+		const int nCount = m_kArray.GetCapacity();
 		for (int i = 0; i < nCount; ++i)
 		{
-			pCo = (SoCoroutine*)m_kArray.GetElement(i);
+			pCo = (SoCoroutine*)m_kArray.GetAt(i);
 			if (pCo)
 			{
 				if (pCo->m_nStatus == SoCoroutineStatus_Suspend)
@@ -128,20 +166,25 @@ void SoCoroutineManager::UpdateCoroutineManager(float fDeltaTime)
 	}
 }
 //------------------------------------------------------------
-SoCoroutine* SoCoroutineManager::CreateCoroutine(SoCoroutineFuncPointer pFunc, void* pUserData)
+SoCoroutine* SoCoroutineManager::CreateCoroutine(const SoCoroutineParam* pParam)
 {
+	if (pParam == 0)
+	{
+		return 0;
+	}
+	//
 	SoCoroutine* pCo = FindEmptyElement();
 	if (pCo == 0)
 	{
-		SoCoroutine kCo;
-		const int nIndex = m_kArray.PushBack(&kCo);
-		pCo = (SoCoroutine*)m_kArray.GetElement(nIndex);
+		m_kArray.TakeNew((void**)(&pCo));
+		pCo->Clear();
 	}
 	if (pCo)
 	{
 		pCo->m_nStatus = SoCoroutineStatus_Begin;
-		pCo->m_pFunc = pFunc;
-		pCo->m_pUserData = pUserData;
+		pCo->m_nObjType = pParam->nObjType;
+		pCo->m_pObjFunc = pParam->pObjFunc;
+		pCo->m_pUserData = pParam->pUserData;
 		++m_nCountOfUndeadCoroutine;
 	}
 	return pCo;
@@ -164,10 +207,10 @@ SoCoroutine* SoCoroutineManager::FindEmptyElement()
 {
 	SoCoroutine* pCo = 0;
 	SoCoroutine* pTemp = 0;
-	const int nCount = m_kArray.GetCount();
+	const int nCount = m_kArray.GetCapacity();
 	for (int i = 0; i < nCount; ++i)
 	{
-		pTemp = (SoCoroutine*)m_kArray.GetElement(i);
+		pTemp = (SoCoroutine*)m_kArray.GetAt(i);
 		if (pTemp && pTemp->m_nStatus == SoCoroutineStatus_Dead)
 		{
 			pCo = pTemp;
